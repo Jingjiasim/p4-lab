@@ -1,0 +1,33 @@
+C4 — Tunnel loop after hop-limit implementation
+
+Configuration:
+s2 tunnel destination 3 redirected to port 1 (towards s1).
+
+Command:
+sh ./p4cli s2 "table_modify MyIngress.myTunnel_exact MyIngress.myTunnel_forward 2 1"
+
+Packet sent:
+h1 python3 send.py 10.19.0.3 "loop after" --tunnel 3 --hops 4
+
+Initial tunnel hop_limit: 4
+
+First measurement:
+logs/s1.txt:1434
+logs/s2.txt:1433
+
+After 5 seconds:
+logs/s1.txt:1434
+logs/s2.txt:1433
+
+Change in packet counts:
+s1: 0
+s2: 0
+
+Observation:
+The packet counts remained unchanged after 5 seconds.
+This is consistent with the hop-limit mechanism terminating
+the forwarding loop rather than allowing indefinite circulation.
+
+Comparison:
+Before hop limit: packet processing continued between s1 and s2.
+After hop limit: packet processing stopped.

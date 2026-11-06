@@ -1,0 +1,54 @@
+C5 — Mixed Deployment Test
+
+Configuration:
+s1: tunnel.p4 (new version with hop limit)
+s2: tunnel_v1.p4 (original version without hop limit)
+
+Command:
+python3 topo.py --id 4919 --s2-program tunnel_v1.p4
+
+Test 1: Tunnel delivery
+Command: h1 python3 send.py 10.19.0.3 "mixed test" --tunnel 3 --hops 4
+
+Result:
+Received (tunnelled, dst_id=3, hop_limit=3) from 10.19.0.1 to 10.19.0.3, TTL 64: 'mixed test'
+
+Test 2: Normal IPv4 forwarding
+Command: h1 ping -c 2 h3
+
+Result:
+2 packets transmitted, 2 received, 0% packet loss
+Received IPv4 TTL: 62
+
+Observation:
+Mixed deployment successfully forwarded both tunnelled and normal IPv4 packets.
+The new switch decremented hop_limit from 4 to 3.
+The old switch forwarded the tunnel packet without decrementing hop_limit.
+
+Compatibility:
+Basic forwarding works, but the old switch does not enforce the hop limit.
+Therefore, loop protection is incomplete until all relevant switches are upgraded.
+
+Test 3: Mixed-deployment forwarding loop
+
+Command:
+sh ./p4cli s2 "table_modify MyIngress.myTunnel_exact MyIngress.myTunnel_forward 2 1"
+h1 python3 send.py 10.19.0.3 "mixed loop" --tunnel 3 --hops 4
+
+First measurement:
+logs/s1.txt:1443
+logs/s2.txt:1441
+
+After 5 seconds:
+logs/s1.txt:1443
+logs/s2.txt:1441
+
+Change in packet counts:
+s1: 0
+s2: 0
+
+Observation:
+The switch processing counts remained unchanged after 5 seconds.
+The result is consistent with the forwarding loop terminating.
+Only s1 enforces and decrements the hop limit, so the loop
+requires more switch visits to terminate than with both switches upgraded.
