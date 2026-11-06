@@ -1,0 +1,30 @@
+C1 — Tunnel loop before hop-limit implementation
+
+Network: 10.19.0.0/16
+Tunnel destination: 3
+s2 tunnel destination 3 redirected to port 1 (towards s1).
+
+Commands:
+sh ./p4cli s2 "table_modify MyIngress.myTunnel_exact MyIngress.myTunnel_forward 2 1"
+h1 python3 send.py 10.19.0.3 "loop" --tunnel 3
+sh grep -c "Processing packet received" logs/s1.txt logs/s2.txt
+sh sleep 5; grep -c "Processing packet received" logs/s1.txt logs/s2.txt
+
+First measurement:
+logs/s1.txt:758
+logs/s2.txt:758
+
+After 5 seconds:
+logs/s1.txt:738
+logs/s2.txt:737
+
+Additional measurements:
+logs/s1.txt:448
+logs/s2.txt:446
+
+After 3 seconds:
+logs/s1.txt:654
+logs/s2.txt:652
+
+Observation:
+Both switches processed 206 additional packets during the final 3-second interval. Earlier log counts decreased, indicating the log contents may have been truncated or rotated. The tunnel loop continued circulating packets because no tunnel hop limit was enforced.

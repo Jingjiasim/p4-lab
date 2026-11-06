@@ -1,0 +1,20 @@
+C4 — Delivery tests with hop limit
+
+Test 1: Tunnel delivery to h2
+Command: h1 python3 send.py 10.19.0.2 "hop test h2" --tunnel 2 --hops 4
+Result:
+Received (tunnelled, dst_id=2, hop_limit=2) from 10.19.0.1 to 10.19.0.2, TTL 64: 'hop test h2'
+
+Test 2: Tunnel delivery to h3
+Command: h1 python3 send.py 10.19.0.3 "hop test h3" --tunnel 3 --hops 4
+Result:
+Received (tunnelled, dst_id=3, hop_limit=2) from 10.19.0.1 to 10.19.0.3, TTL 64: 'hop test h3'
+
+Test 3: Normal IPv4 forwarding
+Command: h1 ping -c 2 h3
+Result:
+2 packets transmitted, 2 received, 0% packet loss
+Received IPv4 TTL: 62
+
+Observation:
+Tunnel packets started with hop_limit=4 and arrived with hop_limit=2 after passing through s1 and s2. Normal IPv4 forwarding remained operational.
